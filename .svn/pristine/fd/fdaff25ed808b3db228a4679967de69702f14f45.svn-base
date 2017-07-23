@@ -1,0 +1,153 @@
+package bank;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.TextField;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+
+public class BankMain extends JFrame implements ActionListener {
+
+	public JMenuBar menubar;
+	public JMenuItem[] menuitemU, menuitemA;
+	public JMenu menuU, menuA;
+
+	public Panel p_main, p_welcome, p_register, p_login, p_mypage, p_input, p_output;
+	public CardLayout cards;
+	public BorderLayout border;
+	public GridLayout grid;
+	private JButton btn1, btn2, btn3, btn4;
+	private TextField t_lid, t_lpw;
+	private Label la_lid, la_lpw;
+	private Image img;
+
+	// private int user_no[] = new int[20];
+	// private String user_name[] = new String[20];
+	// private int user_sum[]= new int[20];
+	// private String user_id[]= new String[20];
+	// private int user_pw[]= new int[20];
+	// private int cnt = 0;
+
+	public BankMain() {
+		// 메뉴바 구성
+		menubar = new JMenuBar();
+		menuU = new JMenu("사용자");
+		menuA = new JMenu("관리자");
+		menuitemU = new JMenuItem[4];
+		menuitemU[0] = new JMenuItem("회원가입");
+		menuitemU[1] = new JMenuItem("로그인");
+		menuitemU[2] = new JMenuItem("개인정보 조회");
+		menuitemU[3] = new JMenuItem("로그아웃");
+		menuitemA = new JMenuItem[2];
+		menuitemA[0] = new JMenuItem("관리자 로그인");
+		menuitemA[1] = new JMenuItem("전체 계좌조회");
+		for (int i = 0; i < menuitemU.length; i++) {
+			menuU.add(menuitemU[i]);
+			menuitemU[i].addActionListener(this);
+			if (i != 0 && i != (menuitemU.length - 1))
+				menuU.addSeparator();
+		}
+		for (int i = 0; i < menuitemA.length; i++) {
+			menuA.add(menuitemA[i]);
+			menuitemA[i].addActionListener(this);
+			if (i == 0)
+				menuA.addSeparator();
+		}
+		menubar.add(menuU);
+		menubar.add(menuA);
+		menubar.setBackground(new Color(123, 206, 239));
+		this.setJMenuBar(menubar);
+		
+		// 화면구성
+		img = Toolkit.getDefaultToolkit().getImage("D:/work/img/bank_img.jpg");
+		cards = new CardLayout();
+		border = new BorderLayout();
+		grid = new GridLayout();
+		this.setLayout(border);
+		p_main = new Panel();
+		p_main.setLayout(cards);
+		
+		
+		p_welcome = new Panel();
+		p_welcome.add(new Label("지원 Bank에 방문해 주셔서 감사합니다."));
+		
+		p_login = new Panel();
+		p_login.setLayout(border);
+		
+		la_lid = new Label("아이디 : ");
+		t_lid = new TextField("");
+		la_lpw = new Label("비밀번호 : ");
+		t_lpw = new TextField("");
+		p_login.add(la_lid,"Center");
+		p_login.add(t_lid,"Center");
+		p_login.add(la_lpw,"Center");
+		p_login.add(t_lpw,"Center");
+		
+		
+
+		// p1.setLayout(new GridLayout(4,1));
+		// btn1 = new JButton("로그인");
+		// btn2 = new JButton("회원가입");
+		// btn3 = new JButton("관리자 로그인");
+		// btn4 = new JButton("종료");
+		// tf1 = new TextField("지원Bank에 방문해 주셔서 감사합니다.");
+		
+		
+		p_main.add(p_welcome, "welcome");
+		p_main.add(p_login, "login");
+		add(p_main, "Center");
+		
+		cards.show(p_main, "welcome");
+		
+		setTitle("BankSystem");
+		setSize(500, 500);
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+
+//	 @Override
+//	 public void paint(Graphics g) {
+//	 g.drawImage(img, 0, 200, 300, 300, p_welcome);
+//	 }
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object obj = e.getSource();
+		JMenuItem mi = (JMenuItem) obj;
+
+		if (mi == menuitemU[0]) {// 회원가입
+			System.out.println("1번");
+		} else if (mi == menuitemU[1]) {// 로그인
+			System.out.println("2번");
+			cards.show(p_main, "login");
+		} else if (mi == menuitemU[2]) {// 개인정보 조회
+			System.out.println("3번");
+		} else if (mi == menuitemU[3]) {// 로그아웃
+			System.out.println("4번");
+			cards.show(p_main, "welcome");
+
+		} else if (mi == menuitemA[0]) {// 관리자 로그인
+			System.out.println("5번");
+		} else if (mi == menuitemA[1]) {// 전체계좌 조회
+			System.out.println("6번");
+		}
+
+	}
+
+	public static void main(String[] args) {
+		new BankMain();
+	}
+
+}

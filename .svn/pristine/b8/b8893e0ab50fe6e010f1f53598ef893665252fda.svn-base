@@ -1,0 +1,505 @@
+package bank;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
+import java.awt.Color;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Label;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.regex.Pattern;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
+public class BankMain extends JFrame implements ActionListener {
+
+	public JMenuBar menubar;
+	public JMenuItem[] menuitemU, menuitemA;
+	public JMenu menuU, menuA;
+
+	public JPanel p_main, p_welcome, p_register, p_login, p_mypage, p_input, p_output, p_alogin, p_umain;
+	public CardLayout cards;
+	public JButton b_login, b_lcancel, b_regist, b_rcancel, b_reid, b_repw, b_mback, b_alogin, b_acancel, b_umbalance,
+			b_umin, b_umout, b_umtrans;
+	public JTextField t_lid, t_lpw, t_rid, t_rpw, t_rname, t_rinput, t_aid;
+	public Label la_lid, la_lpw, la_rid, la_rpw, la_rname, la_rgender, la_aid, la_rinput, la_mid, la_mname, la_mgender,
+			la_minput, la_mvip;
+	public JLabel la_jmid, la_jmname, la_jmgender, la_jminput, la_jmvip, selectm, la_dialog;
+	public Image img;
+	public CheckboxGroup cb;
+	public Checkbox rm, rw;
+	public JDialog dialogMsg;
+
+	private int user_no[] = new int[20];
+	private String user_id[] = new String[20];
+	private String user_pw[] = new String[20];
+	private String user_name[] = new String[20];
+	private String user_gender[] = new String[20];
+	private int user_sum[] = new int[20];
+
+	private int cnt = 0;
+	private String nameExp = "\\w+";
+	private String inputExp = "^[0-9]*$";
+
+	public BankMain() {
+		// user_id[0] = "aaa";
+		// user_id[1] = "aa";
+		// user_id[2] = "a";
+		// 메뉴바 구성
+		menubar = new JMenuBar();
+		menuU = new JMenu("사용자");
+		menuA = new JMenu("관리자");
+		menuitemU = new JMenuItem[4];
+		menuitemU[0] = new JMenuItem("회원가입");
+		menuitemU[1] = new JMenuItem("로그인");
+		menuitemU[2] = new JMenuItem("개인정보 조회");
+		menuitemU[3] = new JMenuItem("로그아웃");
+		menuitemA = new JMenuItem[2];
+		menuitemA[0] = new JMenuItem("관리자 로그인");
+		menuitemA[1] = new JMenuItem("로그인 테스트");
+		for (int i = 0; i < menuitemU.length; i++) {
+			menuU.add(menuitemU[i]);
+			menuitemU[i].addActionListener(this);
+			if (i != 0 && i != (menuitemU.length - 1))
+				menuU.addSeparator();
+		}
+		for (int i = 0; i < menuitemA.length; i++) {
+			menuA.add(menuitemA[i]);
+			menuitemA[i].addActionListener(this);
+			if (i == 0)
+				menuA.addSeparator();
+		}
+		menubar.add(menuU);
+		menubar.add(menuA);
+		menubar.setBackground(new Color(123, 206, 239));
+		this.setJMenuBar(menubar);
+		menuitemU[2].setEnabled(false);
+		menuitemU[3].setEnabled(false);
+
+		// 다이얼로그 생성
+		dialogMsg = new JDialog();
+		dialogMsg.setLayout(new BorderLayout());
+		la_dialog = new JLabel("다이어로그!");
+		dialogMsg.add(new Label(" "), "South");
+		dialogMsg.add(la_dialog, "Center");
+		dialogMsg.add(new Label(" "), "North");
+		dialogMsg.add(new Label(" "), "East");
+		dialogMsg.add(new Label(" "), "West");
+		dialogMsg.setSize(250, 100);
+
+		// 화면구성
+		// img =
+		// Toolkit.getDefaultToolkit().getImage("D:/work/img/bank_img.jpg");
+		cards = new CardLayout();
+		this.setLayout(new FlowLayout());
+
+		// 메인 패널
+		p_main = new JPanel();
+		p_main.setLayout(cards);
+
+		// 첫 화면
+		p_welcome = new JPanel();
+		p_welcome.add(new JLabel("지원 Bank에 방문해 주셔서 감사합니다."));
+
+		// 로그인 화면
+		p_login = new JPanel(new GridLayout(7, 2, 5, 10));
+		la_lid = new Label("아이디 : ");
+		t_lid = new JTextField("");
+		la_lpw = new Label("비밀번호 : ");
+		t_lpw = new JTextField("");
+		b_login = new JButton("로그인");
+		b_lcancel = new JButton("취소");
+
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(la_lid);
+		p_login.add(t_lid);
+		p_login.add(la_lpw);
+		p_login.add(t_lpw);
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(b_login);
+		p_login.add(b_lcancel);
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		
+		b_login.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String id = t_lid.getText().toString().trim();
+				String pw = t_lpw.getText().toString().trim();
+				login(id,pw);
+				
+			}
+		});
+
+		// 회원가입 화면
+		p_register = new JPanel(new GridLayout(8, 3, 5, 10));
+		la_rid = new Label("아이디 : ");
+		la_rpw = new Label("비밀번호 : ");
+		la_rname = new Label("이름 : ");
+		la_rgender = new Label("성별 : ");
+		la_rinput = new Label("초기 입금액 : ");
+		t_rid = new JTextField();
+		t_rpw = new JTextField();
+		t_rname = new JTextField();
+		t_rinput = new JTextField();
+		cb = new CheckboxGroup();
+		rm = new Checkbox("남", true, cb);
+		rw = new Checkbox("여", false, cb);
+		b_regist = new JButton("가입");
+		b_rcancel = new JButton("취소");
+		b_reid = new JButton("중복확인");
+		b_repw = new JButton("비밀번호재확인");
+
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(la_rid);
+		p_register.add(t_rid);
+		p_register.add(b_reid);
+		p_register.add(la_rpw);
+		p_register.add(t_rpw);
+		p_register.add(b_repw);
+		p_register.add(la_rname);
+		p_register.add(t_rname);
+		p_register.add(new Label(" "));
+		p_register.add(la_rgender);
+		p_register.add(rm);
+		p_register.add(rw);
+		p_register.add(la_rinput);
+		p_register.add(t_rinput);
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(b_regist);
+		p_register.add(b_rcancel);
+
+		// id 중복검사
+		b_reid.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				idCheck();
+			}
+		});
+
+		// pw 중복검사
+		b_repw.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				rePassword();
+			}
+		});
+		// 가입버튼 클릭
+		b_regist.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				registerUser();
+			}
+		});
+		// 취소
+		b_rcancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				b_reid.setEnabled(true);
+				t_rid.setEnabled(true);
+				b_repw.setEnabled(true);
+				t_rpw.setEnabled(true);
+				t_rid.setText("");
+				t_rpw.setText("");
+				t_rname.setText("");
+				t_rinput.setText("");
+				b_reid.setText("중복확인");
+				b_repw.setText("비밀번호재확인");
+
+				cards.show(p_main, "welcome");
+			}
+		});
+
+		// 개인정보 조회
+		p_mypage = new JPanel(new GridLayout(8, 2, 5, 10));
+		la_mid = new Label("아이디 : ");
+		la_mname = new Label("이름 : ");
+		la_mgender = new Label("성별 : ");
+		la_minput = new Label("입금액 : ");
+		la_mvip = new Label("우수고객 : ");
+		la_jmid = new JLabel("아이디");
+		la_jmname = new JLabel("이름");
+		la_jmgender = new JLabel("성별");
+		la_jminput = new JLabel("입금액");
+		la_jmvip = new JLabel("N");
+		b_mback = new JButton("메인페이지로");
+
+		p_mypage.add(new Label(" "));
+		p_mypage.add(new Label(" "));
+		p_mypage.add(la_mid);
+		p_mypage.add(la_jmid);
+		p_mypage.add(la_mname);
+		p_mypage.add(la_jmname);
+		p_mypage.add(la_mgender);
+		p_mypage.add(la_jmgender);
+		p_mypage.add(la_minput);
+		p_mypage.add(la_jminput);
+		p_mypage.add(la_mvip);
+		p_mypage.add(la_jmvip);
+		p_mypage.add(new Label(" "));
+		p_mypage.add(new Label(" "));
+		p_mypage.add(new Label(" "));
+		p_mypage.add(b_mback);
+
+		// 관리자 로그인 화면
+		p_alogin = new JPanel(new GridLayout(6, 2, 5, 10));
+		la_aid = new Label("관리자 코드 : ");
+		t_aid = new JTextField("");
+		b_alogin = new JButton("로그인");
+		b_acancel = new JButton("취소");
+
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(la_aid);
+		p_alogin.add(t_aid);
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(b_alogin);
+		p_alogin.add(b_acancel);
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+
+		b_acancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				cards.show(p_main, "welcome");
+			}
+		});
+
+		// 사용자 메인 화면
+		p_umain = new JPanel(new BorderLayout());
+		b_umbalance = new JButton("잔액조회");
+		b_umin = new JButton("입금");
+		b_umout = new JButton("출금");
+		b_umtrans = new JButton("계좌이체");
+		JPanel um = new JPanel(new GridLayout(1, 4, 10, 0));
+		selectm = new JLabel("메뉴를 선택해 주세요.");
+		selectm.setHorizontalAlignment(0);
+		um.add(b_umbalance);
+		um.add(b_umin);
+		um.add(b_umout);
+		um.add(b_umtrans);
+		p_umain.add(um, "South");
+		p_umain.add(selectm, "Center");
+
+		// 메인 패널에 화면 추가
+		p_main.add(p_welcome, "welcome");
+		p_main.add(p_login, "login");
+		p_main.add(p_register, "register");
+		p_main.add(p_mypage, "mypage");
+		p_main.add(p_alogin, "alogin");
+		p_main.add(p_umain, "umain");
+		// 메인 프레임에 메인 패널 추가
+		add(p_main, "Center");
+
+		// 처음 보여줄 화면
+		cards.show(p_main, "welcome");
+
+		// 창 세팅
+		setTitle("BankSystem");
+		setSize(500, 500);
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+
+	// @Override
+	// public void paint(Graphics g) {
+	// g.drawImage(img, 0, 200, 300, 300, p_welcome);
+	// }
+	@Override
+	public void actionPerformed(ActionEvent e) {
+
+		Object obj = e.getSource();
+		if (obj instanceof JMenuItem) {
+			JMenuItem mi = (JMenuItem) obj;
+			if (mi == menuitemU[0]) {// 회원가입
+				System.out.println("1번");
+				cards.show(p_main, "register");
+			} else if (mi == menuitemU[1]) {// 로그인
+				System.out.println("2번");
+				cards.show(p_main, "login");
+			} else if (mi == menuitemU[2]) {// 개인정보 조회
+				System.out.println("3번");
+				cards.show(p_main, "mypage");
+			} else if (mi == menuitemU[3]) {// 로그아웃
+				System.out.println("4번");
+				menuitemU[0].setEnabled(true);
+				menuitemU[1].setEnabled(true);
+				menuitemU[2].setEnabled(false);
+				menuitemU[3].setEnabled(false);
+				menuitemA[0].setEnabled(true);
+				cards.show(p_main, "welcome");
+			} else if (mi == menuitemA[0]) {// 관리자 로그인
+				System.out.println("5번");
+				cards.show(p_main, "alogin");
+			} else if (mi == menuitemA[1]) {// 로그인 테스트
+				System.out.println("6번");
+				cards.show(p_main, "umain");
+				menuitemU[0].setEnabled(false);
+				menuitemU[1].setEnabled(false);
+				menuitemU[2].setEnabled(true);
+				menuitemU[3].setEnabled(true);
+				menuitemA[0].setEnabled(false);
+			}
+		} else if (obj instanceof JButton) {
+			System.out.println("버튼을 눌렀다");
+		}
+	}
+
+	public void idCheck() {
+		boolean check = false;
+		String id_check = t_rid.getText();
+		for (int i = 0; i < user_id.length; i++) {
+			if (id_check.equals(user_id[i])) {
+				check = true;
+				break;
+			} else {
+				check = false;
+			}
+		}
+		if (check == false) {
+			System.out.println("사용 가능한 아이디 입니다.");
+			b_reid.setText("사용가능");
+			b_reid.setEnabled(false);
+			t_rid.setEnabled(false);
+		} else {
+			la_dialog.setText("중복된 아이디 입니다.");
+			dialogMsg.setVisible(true);
+		}
+	}
+
+	public void rePassword() {
+		JDialog dialog = new JDialog(this);
+		JTextField repw = new JTextField(8);
+		JButton btn = new JButton("확인");
+		dialog.setLayout(new FlowLayout());
+		dialog.add(new JLabel("비밀번호 확인"));
+		dialog.add(repw);
+		dialog.add(btn);
+		dialog.pack();
+		dialog.setVisible(true);
+
+		btn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String pw_check = t_rpw.getText();
+				String re = repw.getText();
+
+				if (re.equals(pw_check)) {
+					System.out.println("동일");
+					dialog.setVisible(false);
+					t_rpw.setEnabled(false);
+					b_repw.setText("일치합니다.");
+					b_repw.setEnabled(false);
+
+				} else {
+					System.out.println("틀림");
+					la_dialog.setText("비밀번호를 확인해 주세요.");
+					dialogMsg.setVisible(true);
+				}
+			}
+		});
+
+	}
+
+	public void registerUser() {
+		boolean id, pw;
+		String name, input;
+		id = b_reid.isEnabled();
+		pw = b_repw.isEnabled();
+		name = t_rname.getText();
+		input = t_rinput.getText();
+		String getId = t_rid.getText();
+		String getPw = t_rpw.getText();
+
+		boolean namebool = Pattern.matches(nameExp, name);
+		boolean inputbool = Pattern.matches(inputExp, input);
+
+		if (id == true) {
+			la_dialog.setText("아이디 중복검사를 실행해 주세요.");
+			dialogMsg.setVisible(true);
+		} else if (pw == true) {
+			la_dialog.setText("비밀번호를 재확인해주세요.");
+			dialogMsg.setVisible(true);
+		} else if (namebool == false) {
+			la_dialog.setText("이름을 영어로 입력해 주세요.");
+			dialogMsg.setVisible(true);
+		} else if (inputbool == false) {
+			la_dialog.setText("숫자로 입력 해 주세요.");
+			dialogMsg.setVisible(true);
+		} else if(input.length() == 0) {
+			t_rinput.setText("0");
+		} else {
+			user_no[cnt] = cnt;
+			user_id[cnt] = getId;
+			user_pw[cnt] = getPw;
+			user_name[cnt] = name;
+			user_gender[cnt] = cb.getSelectedCheckbox().getLabel();
+			user_sum[cnt] = Integer.parseInt(input);
+			System.out.println(getId + "," + getPw + "," + name + "," + input + ","
+					+ cb.getSelectedCheckbox().getLabel() + "," + cnt);
+			cnt++;
+			b_reid.setEnabled(true);
+			t_rid.setEnabled(true);
+			b_repw.setEnabled(true);
+			t_rpw.setEnabled(true);
+			t_rid.setText("");
+			t_rpw.setText("");
+			t_rname.setText("");
+			t_rinput.setText("");
+			b_reid.setText("중복확인");
+			b_repw.setText("비밀번호재확인");
+
+			cards.show(p_main, "welcome");
+		}
+	}
+
+	public void login(String id, String pw) {
+		System.out.println(id+","+pw);
+		for (int i = 0; i < cnt; i++) {
+			if (id.equals(user_id[i])) {
+				if (pw.equals(user_pw[i])) {
+					la_dialog.setText(user_name[i] + "님 환영합니다.");
+					dialogMsg.setVisible(true);
+					cards.show(p_main, "umain");
+					break;
+				} else {
+					la_dialog.setText("비밀번호가 틀립니다.");
+					dialogMsg.setVisible(true);
+				}
+			} else{
+				la_dialog.setText("아이디가 틀립니다.");
+				dialogMsg.setVisible(true);
+			}
+		}
+
+	}
+
+	public static void main(String[] args) {
+		new BankMain();
+	}
+}

@@ -1,0 +1,944 @@
+package bank;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Label;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.regex.Pattern;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+
+public class BankMain extends JFrame implements ActionListener {
+
+	public JMenuBar menubar;
+	public JMenuItem[] menuitemU, menuitemA;
+	public JMenu menuU, menuA;
+
+	public JPanel p_main, p_welcome, p_register, p_login, p_mypage, p_input, p_output, p_alogin, p_umain, p_trans,
+			p_amain;
+	public CardLayout cards;
+	public JButton b_login, b_lcancel, b_regist, b_rcancel, b_reid, b_repw, b_mback, b_alogin, b_acancel, b_umbalance,
+			b_umin, b_umout, b_umtrans, b_input, b_output, b_incancel, b_outcancel, b_userSearch, b_trans, b_tcancel,
+			b_adminSearch, b_adminSearchAll;
+	public JTextField t_lid, t_lpw, t_rid, t_rpw, t_rname, t_rinput, t_aid, t_input, t_output, t_userSearch, t_userName,
+			t_tsum, t_tmoney, t_amain;
+	public Label la_lid, la_lpw, la_rid, la_rpw, la_rname, la_rgender, la_aid, la_rinput, la_mid, la_mname, la_mgender,
+			la_minput, la_mvip, la_num, la_select;
+	public JLabel la_jmid, la_jmname, la_jmgender, la_jminput, la_jmvip, selectm, la_dialog, la_jnum, la_jinput,
+			la_joutput;
+	public Image img;
+	public CheckboxGroup cb, trans;
+	public Checkbox rm, rw, transId, transNo;
+	public JDialog dialogMsg;
+
+	private List<Integer> user_no = new ArrayList<Integer>();
+	private List<String> user_id = new ArrayList<String>();
+	private List<String> user_pw = new ArrayList<String>();
+	private List<String> user_name = new ArrayList<String>();
+	private List<String> user_gender = new ArrayList<String>();
+	private List<Integer> user_sum = new ArrayList<Integer>();
+
+	private String userData = "";
+	
+	
+	private int loginUserIdx;
+	private int transUserIdx;
+	private int cnt = 0;
+	private String nameExp = "\\w+";
+	private String inputExp = "^[0-9]*$";
+
+	public BankMain() {	
+		
+		// 유저정보 파일에서 꺼낸 뒤 저장
+		try {
+			FileReader reader = new FileReader("D:/userData.txt");
+			String str ="";
+			while (reader.ready()) { // 읽어올 문자가 있는 동안 true 반환
+				char ch = (char) reader.read();
+				str+= ch;
+				
+			}; userData = str;
+			System.out.println("유저데이터");
+			System.out.println(userData);
+			
+			StringTokenizer st = new StringTokenizer(userData, "|");
+			int countTokens = st.countTokens()/6;
+			System.out.println(countTokens);
+			for (int i = 0; i < countTokens; i++) { // st.countTockens()을 바로 쓰면 안됌
+				int no = Integer.parseInt(st.nextToken().trim());
+				String id = st.nextToken().trim();
+				String pw = st.nextToken().trim();
+				String name = st.nextToken().trim();
+				String gender = st.nextToken().trim();
+				int sum = Integer.parseInt(st.nextToken().trim());
+				System.out.println(no +", " +id +", " +pw +", " +name +", " +gender +", " +sum);
+				user_no.add(no);
+				user_id.add(id);
+				user_pw.add(pw);
+				user_name.add(name);
+				user_gender.add(gender);
+				user_sum.add(sum);
+				cnt++;
+			}
+			
+			System.out.println();
+			
+			
+			
+		} catch (Exception ee) {
+			File file = new File("D:/userData.txt");
+			ee.getMessage();
+		}
+
+		// 메뉴바 구성
+		menubar = new JMenuBar();
+		menuU = new JMenu("사용자");
+		menuA = new JMenu("관리자");
+		menuitemU = new JMenuItem[4];
+		menuitemU[0] = new JMenuItem("회원가입");
+		menuitemU[1] = new JMenuItem("로그인");
+		menuitemU[2] = new JMenuItem("개인정보 조회");
+		menuitemU[3] = new JMenuItem("로그아웃");
+		menuitemA = new JMenuItem[1];
+		menuitemA[0] = new JMenuItem("관리자 로그인");
+		
+		for (int i = 0; i < menuitemU.length; i++) {
+			menuU.add(menuitemU[i]);
+			menuitemU[i].addActionListener(this);
+			if (i != 0 && i != (menuitemU.length - 1))
+				menuU.addSeparator();
+		}
+		for (int i = 0; i < menuitemA.length; i++) {
+			menuA.add(menuitemA[i]);
+			menuitemA[i].addActionListener(this);
+		}
+		menubar.add(menuU);
+		menubar.add(menuA);
+		menubar.setBackground(new Color(123, 206, 239));
+		this.setJMenuBar(menubar);
+		menuitemU[2].setEnabled(false);
+		menuitemU[3].setEnabled(false);
+
+		// 다이얼로그 생성
+		dialogMsg = new JDialog();
+		dialogMsg.setLayout(new BorderLayout());
+		la_dialog = new JLabel("다이어로그!");
+		dialogMsg.add(new Label(" "), "South");
+		dialogMsg.add(la_dialog, "Center");
+		dialogMsg.add(new Label(" "), "North");
+		dialogMsg.add(new Label(" "), "East");
+		dialogMsg.add(new Label(" "), "West");
+		dialogMsg.setSize(270, 100);
+		dialogMsg.setLocationRelativeTo(p_main);
+
+		// 화면구성
+		cards = new CardLayout();
+		this.setLayout(new FlowLayout());
+
+		// 메인 패널
+		p_main = new JPanel();
+		p_main.setLayout(cards);
+
+		// 첫 화면
+		p_welcome = new JPanel();
+		p_welcome.add(new JLabel("지원 Bank에 방문해 주셔서 감사합니다."));
+
+		// 로그인 화면
+		p_login = new JPanel(new GridLayout(7, 2, 5, 10));
+		la_lid = new Label("아이디 : ");
+		t_lid = new JTextField("");
+		la_lpw = new Label("비밀번호 : ");
+		t_lpw = new JTextField("");
+		b_login = new JButton("로그인");
+		b_lcancel = new JButton("취소");
+
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(la_lid);
+		p_login.add(t_lid);
+		p_login.add(la_lpw);
+		p_login.add(t_lpw);
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+		p_login.add(b_login);
+		p_login.add(b_lcancel);
+		p_login.add(new Label(" "));
+		p_login.add(new Label(" "));
+
+		b_login.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String id = t_lid.getText().toString().trim();
+				String pw = t_lpw.getText().toString().trim();
+				login(id, pw);
+
+			}
+		});
+		b_lcancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				t_lid.setText("");
+				t_lpw.setText("");
+				cards.show(p_main, "welcome");
+			}
+		});
+
+		// 회원가입 화면
+		p_register = new JPanel(new GridLayout(8, 3, 5, 10));
+		la_rid = new Label("아이디 : ");
+		la_rpw = new Label("비밀번호 : ");
+		la_rname = new Label("이름 : ");
+		la_rgender = new Label("성별 : ");
+		la_rinput = new Label("초기 입금액 : ");
+		t_rid = new JTextField();
+		t_rpw = new JTextField();
+		t_rname = new JTextField();
+		t_rinput = new JTextField();
+		cb = new CheckboxGroup();
+		rm = new Checkbox("남", true, cb);
+		rw = new Checkbox("여", false, cb);
+		b_regist = new JButton("가입");
+		b_rcancel = new JButton("취소");
+		b_reid = new JButton("중복확인");
+		b_repw = new JButton("비밀번호재확인");
+
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(la_rid);
+		p_register.add(t_rid);
+		p_register.add(b_reid);
+		p_register.add(la_rpw);
+		p_register.add(t_rpw);
+		p_register.add(b_repw);
+		p_register.add(la_rname);
+		p_register.add(t_rname);
+		p_register.add(new Label(" "));
+		p_register.add(la_rgender);
+		p_register.add(rm);
+		p_register.add(rw);
+		p_register.add(la_rinput);
+		p_register.add(t_rinput);
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(new Label(" "));
+		p_register.add(b_regist);
+		p_register.add(b_rcancel);
+
+		// id 중복검사
+		b_reid.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				idCheck();
+			}
+		});
+
+		// pw 중복검사
+		b_repw.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (t_rpw.getText().length() == 0) {
+					la_dialog.setText("비밀번호를 입력해 주세요.");
+					dialogMsg.setVisible(true);
+				} else {
+					rePassword();
+				}
+			}
+		});
+		// 가입버튼 클릭
+		b_regist.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				registerUser();
+			}
+		});
+		// 취소
+		b_rcancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				b_reid.setEnabled(true);
+				t_rid.setEnabled(true);
+				b_repw.setEnabled(true);
+				t_rpw.setEnabled(true);
+				t_rid.setText("");
+				t_rpw.setText("");
+				t_rname.setText("");
+				t_rinput.setText("");
+				b_reid.setText("중복확인");
+				b_repw.setText("비밀번호재확인");
+
+				cards.show(p_main, "welcome");
+			}
+		});
+
+		// 개인정보 조회
+		p_mypage = new JPanel(new GridLayout(9, 2, 5, 10));
+		la_num = new Label("계좌번호 : ");
+		la_mid = new Label("아이디 : ");
+		la_mname = new Label("이름 : ");
+		la_mgender = new Label("성별 : ");
+		la_minput = new Label("입금액 : ");
+		la_mvip = new Label("우수고객 : ");
+		la_jnum = new JLabel("계좌번호");
+		la_jmid = new JLabel("아이디");
+		la_jmname = new JLabel("이름");
+		la_jmgender = new JLabel("성별");
+		la_jminput = new JLabel("입금액");
+		la_jmvip = new JLabel("N");
+		b_mback = new JButton("메인페이지로");
+
+		p_mypage.add(new Label(" "));
+		p_mypage.add(new Label(" "));
+		p_mypage.add(la_num);
+		p_mypage.add(la_jnum);
+		p_mypage.add(la_mid);
+		p_mypage.add(la_jmid);
+		p_mypage.add(la_mname);
+		p_mypage.add(la_jmname);
+		p_mypage.add(la_mgender);
+		p_mypage.add(la_jmgender);
+		p_mypage.add(la_minput);
+		p_mypage.add(la_jminput);
+		p_mypage.add(la_mvip);
+		p_mypage.add(la_jmvip);
+		p_mypage.add(new Label(" "));
+		p_mypage.add(new Label(" "));
+		p_mypage.add(new Label(" "));
+		p_mypage.add(b_mback);
+
+		b_mback.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				cards.show(p_main, "umain");
+			}
+		});
+
+		// 관리자 로그인 화면
+		p_alogin = new JPanel(new GridLayout(6, 2, 5, 10));
+		la_aid = new Label("관리자 코드 : ");
+		t_aid = new JTextField("");
+		b_alogin = new JButton("로그인");
+		b_acancel = new JButton("취소");
+
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(la_aid);
+		p_alogin.add(t_aid);
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		p_alogin.add(b_alogin);
+		p_alogin.add(b_acancel);
+		p_alogin.add(new Label(" "));
+		p_alogin.add(new Label(" "));
+		b_alogin.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if(t_aid.getText().equals("bank")){
+					cards.show(p_main, "amain");
+				} else{
+					t_aid.setText("");
+					la_dialog.setText("관리자코드를 확인해주세요.");
+					dialogMsg.setVisible(true);
+				}
+
+			}
+		});
+		b_acancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				t_aid.setText("");
+				cards.show(p_main, "welcome");
+			}
+		});
+
+		// 사용자 메인 화면
+		p_umain = new JPanel(new BorderLayout());
+		b_umbalance = new JButton("잔액조회");
+		b_umin = new JButton("입금");
+		b_umout = new JButton("출금");
+		b_umtrans = new JButton("계좌이체");
+		JPanel um = new JPanel(new GridLayout(1, 4, 10, 0));
+		selectm = new JLabel("메뉴를 선택해 주세요.");
+		selectm.setHorizontalAlignment(0);
+		um.add(b_umbalance);
+		um.add(b_umin);
+		um.add(b_umout);
+		um.add(b_umtrans);
+		p_umain.add(um, "South");
+		p_umain.add(selectm, "Center");
+		b_umbalance.addActionListener(this);
+		b_umin.addActionListener(this);
+		b_umout.addActionListener(this);
+		b_umtrans.addActionListener(this);
+
+		// 입금 화면
+		p_input = new JPanel(new GridLayout(5, 2, 5, 10));
+		b_input = new JButton("입금");
+		b_incancel = new JButton("취소");
+		la_jinput = new JLabel("");
+		t_input = new JTextField();
+		p_input.add(new Label(""));
+		p_input.add(new Label(""));
+		p_input.add(new Label("현재 잔액 :"));
+		p_input.add(la_jinput);
+		p_input.add(new Label("입금액 : "));
+		p_input.add(t_input);
+		p_input.add(new Label(""));
+		p_input.add(new Label(""));
+		p_input.add(b_input);
+		p_input.add(b_incancel);
+		b_input.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				input();
+			}
+		});
+		b_incancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				cards.show(p_main, "umain");
+			}
+		});
+
+		// 출금 화면
+		p_output = new JPanel(new GridLayout(5, 2, 5, 10));
+		b_output = new JButton("출금");
+		b_outcancel = new JButton("취소");
+		la_joutput = new JLabel("");
+		t_output = new JTextField("");
+		p_output.add(new Label(""));
+		p_output.add(new Label(""));
+		p_output.add(new Label("현재 잔액 :"));
+		p_output.add(la_joutput);
+		p_output.add(new Label("출금액 : "));
+		p_output.add(t_output);
+		p_output.add(new Label(""));
+		p_output.add(new Label(""));
+		p_output.add(b_output);
+		p_output.add(b_outcancel);
+		b_output.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				output();
+			}
+		});
+		b_outcancel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				cards.show(p_main, "umain");
+			}
+		});
+
+		// 계좌이체 화면
+		p_trans = new JPanel(new GridLayout(9, 3, 5, 10));
+		trans = new CheckboxGroup();
+		transId = new Checkbox("아이디로 계좌이체", true, trans);
+		transNo = new Checkbox("계좌번호로 계좌이체", false, trans);
+		la_select = new Label("이체받을 아이디 입력");
+		t_userSearch = new JTextField("");
+		b_userSearch = new JButton("유저 검색");
+		t_userName = new JTextField("");
+		t_tsum = new JTextField("");
+		t_tmoney = new JTextField(" ");
+		b_tcancel = new JButton("취소");
+		b_trans = new JButton("이체");
+
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label("이체방식 선택"));
+		p_trans.add(transId);
+		p_trans.add(transNo);
+		p_trans.add(la_select);
+		p_trans.add(t_userSearch);
+		p_trans.add(b_userSearch);
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label("이체받을 유저 이름"));
+		p_trans.add(t_userName);
+		p_trans.add(new Label(""));
+		p_trans.add(new Label("현재 잔액"));
+		p_trans.add(t_tsum);
+		p_trans.add(new Label(""));
+		p_trans.add(new Label("이체할 금액"));
+		p_trans.add(t_tmoney);
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(new Label(""));
+		p_trans.add(b_trans);
+		p_trans.add(b_tcancel);
+
+		t_userName.setEnabled(false);
+		t_tsum.setEnabled(false);
+		t_tmoney.setEnabled(false);
+		transId.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				la_select.setText("이체받을 아이디 입력");
+				t_userSearch.setText("");
+			}
+		});
+		transNo.addItemListener(new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				la_select.setText("이체받을 계좌번호 입력");
+				t_userSearch.setText("");
+			}
+		});
+		b_userSearch.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				searchUser();
+			}
+		});
+		b_trans.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				transfer();
+			}
+		});
+		b_tcancel.addActionListener(new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				t_userSearch.setText("");
+				t_userName.setText("");
+				t_tsum.setText("");
+				t_tmoney.setText("");
+				t_tmoney.setEnabled(false);
+				transId.setEnabled(true);
+				transNo.setEnabled(true);
+				cards.show(p_main, "umain");
+				cards.show(p_main, "umain");
+			}
+		});
+
+		// (JButton)취소 (JButton)이체
+
+		// TODO 관리자 메인 화면
+		p_amain = new JPanel(new BorderLayout());
+		
+		
+		
+		
+		// 관리자 페이지
+		//
+		// (button)회원정보조회 (button)전체회원정보 조회
+		// +id로 정보찾기 +회원정보 전체 출력
+		// +계좌번호로 정보찾기
+
+		// 메인 패널에 화면 추가
+		p_main.add(p_welcome, "welcome");
+		p_main.add(p_login, "login");
+		p_main.add(p_register, "register");
+		p_main.add(p_mypage, "mypage");
+		p_main.add(p_alogin, "alogin");
+		p_main.add(p_umain, "umain");
+		p_main.add(p_input, "input");
+		p_main.add(p_output, "output");
+		p_main.add(p_trans, "trans");
+		p_main.add(p_amain,"amain");
+		// 메인 프레임에 메인 패널 추가
+		add(p_main, "Center");
+
+		// 처음 보여줄 화면
+		cards.show(p_main, "welcome");
+
+		// 창 세팅
+		setTitle("BankSystem");
+		setSize(500, 500);
+		Dimension frameSize = this.getSize();
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		this.setLocation((screenSize.width - frameSize.width) / 2, (screenSize.height - frameSize.height) / 2);
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+
+	// 메뉴 버튼 클릭 리스너
+	@Override
+	public void actionPerformed(ActionEvent e) {
+
+		Object obj = e.getSource();
+		if (obj instanceof JMenuItem) {
+			JMenuItem mi = (JMenuItem) obj;
+			if (mi == menuitemU[0]) {// 회원가입
+				System.out.println("1번");
+				cards.show(p_main, "register");
+			} else if (mi == menuitemU[1]) {// 로그인
+				System.out.println("2번");
+				cards.show(p_main, "login");
+			} else if (mi == menuitemU[2]) {// 개인정보 조회
+				System.out.println("3번");
+				la_jnum.setText("" + user_no.get(loginUserIdx));
+				la_jmid.setText(user_id.get(loginUserIdx));
+				la_jmname.setText(user_name.get(loginUserIdx));
+				la_jmgender.setText(user_gender.get(loginUserIdx));
+				la_jminput.setText("" + user_sum.get(loginUserIdx));
+				cards.show(p_main, "mypage");
+			} else if (mi == menuitemU[3]) {// 로그아웃
+				System.out.println("4번");
+				menuitemU[0].setEnabled(true);
+				menuitemU[1].setEnabled(true);
+				menuitemU[2].setEnabled(false);
+				menuitemU[3].setEnabled(false);
+				menuitemA[0].setEnabled(true);
+				cards.show(p_main, "welcome");
+			} else if (mi == menuitemA[0]) {// 관리자 로그인
+				System.out.println("5번");
+				cards.show(p_main, "alogin");
+			}
+			
+		} else if (obj instanceof JButton) {
+			JButton btn = (JButton) obj;
+			if (btn == b_umin) {
+				la_jinput.setText(user_sum.get(loginUserIdx).toString());
+				cards.show(p_main, "input");
+			} else if (btn == b_umbalance) {
+				balance();
+			} else if (btn == b_umout) {
+				la_joutput.setText(user_sum.get(loginUserIdx).toString());
+				cards.show(p_main, "output");
+			} else if (btn == b_umtrans) {
+				cards.show(p_main, "trans");
+			}
+		}
+	}
+
+	// id 중복체크 메소드
+	public void idCheck() {
+		boolean check = false;
+		String id_check = t_rid.getText();
+		if (t_rid.getText().length() == 0) {
+			la_dialog.setText("아이디를 입력해 주세요.");
+			dialogMsg.setVisible(true);
+		} else {
+			for (int i = 0; i < user_id.size(); i++) {
+				if (id_check.equals(user_id.get(i))) {
+					check = true;
+					break;
+				} else {
+					check = false;
+				}
+			}
+			if (check == false) {
+				System.out.println("사용 가능한 아이디 입니다.");
+				b_reid.setText("사용가능");
+				b_reid.setEnabled(false);
+				t_rid.setEnabled(false);
+			} else {
+				la_dialog.setText("중복된 아이디 입니다.");
+				dialogMsg.setVisible(true);
+			}
+		}
+	}
+
+	// pw 중복체크 메소드
+	public void rePassword() {
+		JDialog dialog = new JDialog(this);
+		JTextField repw = new JTextField(8);
+		JButton btn = new JButton("확인");
+		dialog.setLayout(new FlowLayout());
+		dialog.add(new JLabel("비밀번호 확인"));
+		dialog.add(repw);
+		dialog.add(btn);
+		dialog.pack();
+		dialog.setLocationRelativeTo(p_main);
+		dialog.setVisible(true);
+
+		btn.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String pw_check = t_rpw.getText();
+				String re = repw.getText();
+
+				if (re.equals(pw_check)) {
+					System.out.println("동일");
+					dialog.setVisible(false);
+					t_rpw.setEnabled(false);
+					b_repw.setText("일치합니다.");
+					b_repw.setEnabled(false);
+
+				} else {
+					System.out.println("틀림");
+					la_dialog.setText("비밀번호를 확인해 주세요.");
+					dialogMsg.setVisible(true);
+				}
+			}
+		});
+
+	}
+
+	// 회원가입 메소드 TODO IO로 정보입력
+	public void registerUser() {
+		boolean id, pw;
+		String name, input;
+		id = b_reid.isEnabled();
+		pw = b_repw.isEnabled();
+		name = t_rname.getText();
+		input = t_rinput.getText();
+		String getId = t_rid.getText();
+		String getPw = t_rpw.getText();
+
+		boolean namebool = Pattern.matches(nameExp, name);
+		boolean inputbool = Pattern.matches(inputExp, input);
+
+		if (id == true) {
+			la_dialog.setText("아이디 중복검사를 실행해 주세요.");
+			dialogMsg.setVisible(true);
+		} else if (pw == true) {
+			la_dialog.setText("비밀번호를 재확인해주세요.");
+			dialogMsg.setVisible(true);
+		} else if (namebool == false) {
+			la_dialog.setText("이름을 영어로 입력해 주세요.");
+			dialogMsg.setVisible(true);
+		} else if (inputbool == false) {
+			la_dialog.setText("초기 입금액을 숫자로 입력해 주세요.");
+			dialogMsg.setVisible(true);
+		} else if (input.length() == 0) {
+			t_rinput.setText("0");
+		} else {
+			user_no.add(cnt);
+			user_id.add(getId);
+			user_pw.add(getPw);
+			user_name.add(name);
+			user_gender.add(cb.getSelectedCheckbox().getLabel());
+			user_sum.add(Integer.parseInt(input));
+			
+			
+			try {
+				PrintWriter fw = new PrintWriter(new BufferedWriter(new FileWriter(new File("D:/userData.txt"))), true);
+				String str =cnt+"|"+t_rid.getText()+"|"+t_rpw.getText()+"|"+t_rname.getText()+"|"+cb.getSelectedCheckbox().getLabel()+"|"+t_rinput.getText()+"|";
+//				fw.write(str);
+//				fw.close();
+				System.out.println(str);
+			} catch (Exception ee) {
+				ee.getMessage();
+			}
+			
+			
+			System.out.println(getId + "," + getPw + "," + name + "," + input + ","
+					+ cb.getSelectedCheckbox().getLabel() + "," + cnt);
+			cnt++;
+			b_reid.setEnabled(true);
+			t_rid.setEnabled(true);
+			b_repw.setEnabled(true);
+			t_rpw.setEnabled(true);
+			t_rid.setText("");
+			t_rpw.setText("");
+			t_rname.setText("");
+			t_rinput.setText("");
+			b_reid.setText("중복확인");
+			b_repw.setText("비밀번호재확인");
+			
+			cards.show(p_main, "welcome");
+		}
+	}
+
+	// 로그인 메소드
+	public void login(String id, String pw) {
+		System.out.println(id + "," + pw);
+		for (int i = 0; i < cnt; i++) {
+			if (id.equals(user_id.get(i))) {
+				if (pw.equals(user_pw.get(i))) {
+					la_dialog.setText(user_name.get(i) + "님 환영합니다.");
+					dialogMsg.setVisible(true);
+					t_lid.setText("");
+					t_lpw.setText("");
+					menuitemU[0].setEnabled(false);
+					menuitemU[1].setEnabled(false);
+					menuitemU[2].setEnabled(true);
+					menuitemU[3].setEnabled(true);
+					menuitemA[0].setEnabled(false);
+					cards.show(p_main, "umain");
+					loginUserIdx = i;
+					break;
+				} else {
+					System.out.println("비밀번호 실패");
+					la_dialog.setText("비밀번호가 틀립니다.");
+					dialogMsg.setVisible(true);
+					break;
+				}
+			} else {
+				System.out.println("아이디 실패");
+				la_dialog.setText("아이디가 틀립니다.");
+				dialogMsg.setVisible(true);
+			}
+		}
+
+	}
+
+	// 잔액조회 메소드
+	public void balance() {
+		la_dialog.setText("현재 잔액은 " + user_sum.get(loginUserIdx) + "원 입니다.");
+		dialogMsg.setVisible(true);
+	}
+
+	// 입금 메소드
+	public void input() {
+		String input = t_input.getText();
+		System.out.println(input);
+		boolean inputbool = Pattern.matches(inputExp, input);
+		if (inputbool) {
+			int sum = user_sum.get(loginUserIdx);
+			int sumAs = Integer.parseInt(t_input.getText().toString());
+			user_sum.set(loginUserIdx, sum + sumAs);
+			la_dialog.setText("현재 잔액은 " + user_sum.get(loginUserIdx) + "원 입니다.");
+			dialogMsg.setVisible(true);
+			t_input.setText("");
+			cards.show(p_main, "umain");
+		} else {
+			la_dialog.setText("초기 입금액을 숫자로 입력해 주세요.");
+			dialogMsg.setVisible(true);
+		}
+	}
+
+	// 출금 메소드
+	public void output() {
+		String output = t_output.getText();
+		System.out.println(output);
+
+		boolean outputbool = Pattern.matches(inputExp, output);
+
+		if (outputbool) {
+			int sum = user_sum.get(loginUserIdx);
+			int sub = Integer.parseInt(t_output.getText().toString());
+			try {
+				if (sub > sum) {
+					throw new Exception();
+				}
+				user_sum.set(loginUserIdx, sum - sub);
+				la_dialog.setText("현재 잔액은 " + user_sum.get(loginUserIdx) + "원 입니다.");
+				dialogMsg.setVisible(true);
+				t_output.setText("");
+				cards.show(p_main, "umain");
+				return;
+			} catch (Exception e) {
+				la_dialog.setText("잔액보다 적은 액수를 입력해주세요.");
+				dialogMsg.setVisible(true);
+			}
+		} else {
+			System.out.println("문자입력");
+			la_dialog.setText("출금액을 숫자로 입력해 주세요.");
+			dialogMsg.setVisible(true);
+		}
+	}
+
+	// 유저 검색 메소드
+	public void searchUser() {
+		String user = t_userSearch.getText();
+		boolean check =false;
+		if (trans.getSelectedCheckbox().getLabel().equals("아이디로 계좌이체")) {
+			for (int i = 0; i < cnt; i++) {
+				if (user.equals(user_id.get(i))) {
+					t_userName.setText(user_name.get(i));
+					t_tsum.setText("" + user_sum.get(loginUserIdx));
+					t_tmoney.setEnabled(true);
+					transId.setEnabled(false);
+					transNo.setEnabled(false);
+					transUserIdx = i;
+					check = true;
+					break;
+				} 
+			}
+			if(check == false){
+				System.out.println("아이디 없다!");
+				la_dialog.setText("아이디가 없습니다.");
+				dialogMsg.setVisible(true);
+			}
+		} else if (trans.getSelectedCheckbox().getLabel().equals("계좌번호로 계좌이체")) {
+			try{
+			int user1 = Integer.parseInt(user);	
+			for (int i = 0; i < cnt; i++) {
+				if (user1 == user_no.get(i)) {
+					t_userName.setText(user_name.get(i));
+					t_tsum.setText("" + user_sum.get(loginUserIdx));
+					t_tmoney.setEnabled(true);
+					transId.setEnabled(false);
+					transNo.setEnabled(false);
+					transUserIdx = i;
+					break;
+				} else {
+					System.out.println("계좌번호 없음");
+					la_dialog.setText("계좌번호가 없습니다.");
+					dialogMsg.setVisible(true);
+				}
+			}
+			} catch(Exception e){
+				System.out.println("예외발생");
+				la_dialog.setText("계좌번호를 숫자로 입력해주세요.");
+				dialogMsg.setVisible(true);
+			}
+			
+		}
+	}
+	
+	// 계좌이체 메소드
+	public void transfer(){
+		try{
+			int money = Integer.parseInt(t_tmoney.getText().trim());
+			int userFrom = user_sum.get(loginUserIdx);
+			int userTo = user_sum.get(transUserIdx);
+			userFrom = userFrom - money;
+			userTo = userTo + money;
+			user_sum.set(loginUserIdx, userFrom);
+			user_sum.set(transUserIdx, userTo);
+			System.out.println("잔액: " +user_sum.get(loginUserIdx));
+			la_dialog.setText("잔액은 " +user_sum.get(loginUserIdx)+"원 입니다.");
+			dialogMsg.setVisible(true);
+			
+			t_userSearch.setText("");
+			t_userName.setText("");
+			t_tsum.setText("");
+			t_tmoney.setText("");
+			t_tmoney.setEnabled(false);
+			transId.setEnabled(true);
+			transNo.setEnabled(true);
+			cards.show(p_main, "umain");
+			
+		} catch(Exception e){
+			la_dialog.setText("금액을 확인해 주세요.");
+			dialogMsg.setVisible(true);
+		}
+			
+			
+	}
+
+	public static void main(String[] args) throws Exception {
+		new BankMain();
+	}
+}
